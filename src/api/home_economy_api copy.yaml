@@ -1,0 +1,1948 @@
+openapi: 3.0.3
+info:
+  title: Home Economy API
+  description: |
+    A comprehensive API for managing household chores, rewards, and family economics.
+    Supports parent-child role management, point tracking, reward systems, and event countdowns.
+  version: 1.0.0
+  contact:
+    name: Home Economy API Support
+    email: support@homeeconomy.app
+
+servers:
+  - url: https://api.homeeconomy.app/v1
+    description: Production server
+  - url: https://staging-api.homeeconomy.app/v1
+    description: Staging server
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Authentication
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password, traceId]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+                traceId:
+                  type: string
+                  format: uuid
+                  description: UUID for tracking user journey and debugging
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          access_token:
+                            type: string
+                          refresh_token:
+                            type: string
+                          user:
+                            $ref: '#/components/schemas/User'
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token, traceId]
+              properties:
+                refresh_token:
+                  type: string
+                traceId:
+                  type: string
+                  format: uuid
+                  description: UUID for tracking user journey and debugging
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          access_token:
+                            type: string
+
+  # Users
+  /users:
+    get:
+      tags: [Users]
+      summary: List household users
+      parameters:
+        - name: household_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by household ID
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [parent, teen, child]
+          description: Filter by user role
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+
+    post:
+      tags: [Users]
+      summary: Create new user (parent only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+
+  /users/{user_id}:
+    get:
+      tags: [Users]
+      summary: Get user details
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+
+    patch:
+      tags: [Users]
+      summary: Update user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+
+  # Households
+  /households:
+    get:
+      tags: [Households]
+      summary: List user's households
+      responses:
+        '200':
+          description: List of households
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Household'
+
+    post:
+      tags: [Households]
+      summary: Create new household
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HouseholdCreate'
+      responses:
+        '201':
+          description: Household created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Household'
+
+  /households/{household_id}:
+    get:
+      tags: [Households]
+      summary: Get household details
+      parameters:
+        - name: household_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Household details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Household'
+
+    patch:
+      tags: [Households]
+      summary: Update household (heads only)
+      parameters:
+        - name: household_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HouseholdUpdate'
+      responses:
+        '200':
+          description: Household updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Household'
+
+  /households/{household_id}/members:
+    post:
+      tags: [Households]
+      summary: Add member to household (heads only)
+      parameters:
+        - name: household_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, traceId]
+              properties:
+                user_id:
+                  type: integer
+                role:
+                  type: string
+                  enum: [parent, teen, child]
+                traceId:
+                  type: string
+                  format: uuid
+                  description: UUID for tracking user journey and debugging
+      responses:
+        '201':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+    delete:
+      tags: [Households]
+      summary: Remove member from household (heads only)
+      parameters:
+        - name: household_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: traceId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: UUID for tracking user journey and debugging
+      responses:
+        '204':
+          description: Member removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # Chores
+  /chores:
+    get:
+      tags: [Chores]
+      summary: List chores
+      parameters:
+        - name: household_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by household
+        - name: assigned_to
+          in: query
+          schema:
+            type: integer
+          description: Filter by assigned user
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [incomplete, pending, completed, skipped]
+        - name: due_date_start
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: due_date_end
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of chores
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Chore'
+
+    post:
+      tags: [Chores]
+      summary: Create new chore (parents only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChoreCreate'
+      responses:
+        '201':
+          description: Chore created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Chore'
+
+  /chores/{chore_id}:
+    get:
+      tags: [Chores]
+      summary: Get chore details
+      parameters:
+        - name: chore_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Chore details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Chore'
+
+    patch:
+      tags: [Chores]
+      summary: Update chore
+      parameters:
+        - name: chore_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChoreUpdate'
+      responses:
+        '200':
+          description: Chore updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Chore'
+
+    delete:
+      tags: [Chores]
+      summary: Delete chore (parents only)
+      parameters:
+        - name: chore_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: traceId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: UUID for tracking user journey and debugging
+      responses:
+        '204':
+          description: Chore deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /chores/{chore_id}/complete:
+    post:
+      tags: [Chores]
+      summary: Mark chore as completed
+      parameters:
+        - name: chore_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [traceId]
+              properties:
+                notes:
+                  type: string
+                  description: Optional completion notes
+                traceId:
+                  type: string
+                  format: uuid
+                  description: UUID for tracking user journey and debugging
+      responses:
+        '200':
+          description: Chore marked as completed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Chore'
+
+  /chores/{chore_id}/approve:
+    post:
+      tags: [Chores]
+      summary: Approve completed chore (parents only)
+      parameters:
+        - name: chore_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [traceId]
+              properties:
+                approved:
+                  type: boolean
+                  description: Whether to approve or reject
+                feedback:
+                  type: string
+                  description: Optional feedback
+                traceId:
+                  type: string
+                  format: uuid
+                  description: UUID for tracking user journey and debugging
+      responses:
+        '200':
+          description: Chore approval processed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Chore'
+
+  # Rewards
+  /rewards:
+    get:
+      tags: [Rewards]
+      summary: List rewards
+      parameters:
+        - name: household_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by household
+        - name: available_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Show only rewards user can afford
+      responses:
+        '200':
+          description: List of rewards
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Reward'
+
+    post:
+      tags: [Rewards]
+      summary: Create new reward (parents only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RewardCreate'
+      responses:
+        '201':
+          description: Reward created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Reward'
+
+  /rewards/{reward_id}:
+    get:
+      tags: [Rewards]
+      summary: Get reward details
+      parameters:
+        - name: reward_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Reward details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Reward'
+
+    patch:
+      tags: [Rewards]
+      summary: Update reward (parents only)
+      parameters:
+        - name: reward_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RewardUpdate'
+      responses:
+        '200':
+          description: Reward updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Reward'
+
+    delete:
+      tags: [Rewards]
+      summary: Delete reward (parents only)
+      parameters:
+        - name: reward_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: traceId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: UUID for tracking user journey and debugging
+      responses:
+        '204':
+          description: Reward deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /rewards/{reward_id}/redeem:
+    post:
+      tags: [Rewards]
+      summary: Redeem reward
+      parameters:
+        - name: reward_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [traceId]
+              properties:
+                traceId:
+                  type: string
+                  format: uuid
+                  description: UUID for tracking user journey and debugging
+      responses:
+        '201':
+          description: Reward redemption processed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Transaction'
+
+  # Events
+  /events:
+    get:
+      tags: [Events]
+      summary: List countdown events
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by user (defaults to current user)
+        - name: upcoming_only
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Event'
+
+    post:
+      tags: [Events]
+      summary: Create countdown event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreate'
+      responses:
+        '201':
+          description: Event created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Event'
+
+  /events/{event_id}:
+    get:
+      tags: [Events]
+      summary: Get event details
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Event details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Event'
+
+    patch:
+      tags: [Events]
+      summary: Update event
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventUpdate'
+      responses:
+        '200':
+          description: Event updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Event'
+
+    delete:
+      tags: [Events]
+      summary: Delete event
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: traceId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: UUID for tracking user journey and debugging
+      responses:
+        '204':
+          description: Event deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # Transactions
+  /transactions:
+    get:
+      tags: [Transactions]
+      summary: List transactions
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by user
+        - name: household_id
+          in: query
+          schema:
+            type: integer
+          description: Filter by household
+        - name: transaction_type
+          in: query
+          schema:
+            type: string
+            enum: [chore_completion, reward_redemption, manual_adjustment, bonus]
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Transaction'
+
+    post:
+      tags: [Transactions]
+      summary: Create manual transaction (parents only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionCreate'
+      responses:
+        '201':
+          description: Transaction created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Transaction'
+
+  # Analytics & Reporting
+  /analytics/leaderboard:
+    get:
+      tags: [Analytics]
+      summary: Get household leaderboard
+      parameters:
+        - name: household_id
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [week, month, quarter, year, all_time]
+            default: month
+      responses:
+        '200':
+          description: Leaderboard data
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          period:
+                            type: string
+                          leaderboard:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                user_id:
+                                  type: integer
+                                user_name:
+                                  type: string
+                                points_earned:
+                                  type: integer
+                                chores_completed:
+                                  type: integer
+                                money_earned:
+                                  type: number
+                                  format: decimal
+                                rank:
+                                  type: integer
+
+  /analytics/user-summary:
+    get:
+      tags: [Analytics]
+      summary: Get user analytics summary
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+          description: User ID (defaults to current user)
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [week, month, quarter, year, all_time]
+            default: month
+      responses:
+        '200':
+          description: User analytics summary
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user_id:
+                            type: integer
+                          period:
+                            type: string
+                          total_points:
+                            type: integer
+                          points_earned:
+                            type: integer
+                          points_spent:
+                            type: integer
+                          money_earned:
+                            type: number
+                            format: decimal
+                          money_spent:
+                            type: number
+                            format: decimal
+                          chores_completed:
+                            type: integer
+                          chores_assigned:
+                            type: integer
+                          completion_rate:
+                            type: number
+                            format: percentage
+                          rewards_redeemed:
+                            type: integer
+
+  /analytics/household-overview:
+    get:
+      tags: [Analytics]
+      summary: Get household overview (parents only)
+      parameters:
+        - name: household_id
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [week, month, quarter, year]
+            default: month
+      responses:
+        '200':
+          description: Household overview
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          household_id:
+                            type: integer
+                          period:
+                            type: string
+                          total_chores:
+                            type: integer
+                          completed_chores:
+                            type: integer
+                          completion_rate:
+                            type: number
+                            format: percentage
+                          total_points_awarded:
+                            type: integer
+                          total_money_earned:
+                            type: number
+                            format: decimal
+                          active_members:
+                            type: integer
+                          most_productive_member:
+                            type: object
+                            properties:
+                              user_id:
+                                type: integer
+                              user_name:
+                                type: string
+                              points_earned:
+                                type: integer
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ApiResponse:
+      type: object
+      required: [traceId]
+      properties:
+        errorMessage:
+          type: string
+          description: User-friendly error message that can be displayed to the user
+        traceId:
+          type: string
+          format: uuid
+          description: UUID used to trace errors across boundaries
+        data:
+          description: The actual response data
+        per_page:
+          type: integer
+          description: Number of items per page (only for paginated requests)
+        current_page:
+          type: integer
+          description: Current page number (only for paginated requests)
+        total:
+          type: integer
+          description: Total number of items (only for paginated requests)
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+        profile:
+          type: object
+          properties:
+            role:
+              type: string
+              enum: [parent, teen, child]
+            age:
+              type: integer
+              minimum: 3
+              maximum: 100
+            avatar:
+              type: string
+              format: uri
+            total_points:
+              type: integer
+              readOnly: true
+            total_money:
+              type: number
+              format: decimal
+              readOnly: true
+            date_joined:
+              type: string
+              format: date-time
+              readOnly: true
+        households:
+          type: array
+          items:
+            type: integer
+          readOnly: true
+
+    UserCreate:
+      type: object
+      required: [username, email, first_name, last_name, role, age, traceId]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 150
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+          maxLength: 30
+        last_name:
+          type: string
+          maxLength: 30
+        password:
+          type: string
+          format: password
+          minLength: 8
+        role:
+          type: string
+          enum: [parent, teen, child]
+        age:
+          type: integer
+          minimum: 3
+          maximum: 100
+        avatar:
+          type: string
+          format: uri
+        household_id:
+          type: integer
+          description: Household to add user to
+        traceId:
+          type: string
+          format: uuid
+          description: UUID for tracking user journey and debugging
+
+    UserUpdate:
+      type: object
+      required: [traceId]
+      properties:
+        first_name:
+          type: string
+          maxLength: 30
+        last_name:
+          type: string
+          maxLength: 30
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [parent, teen, child]
+        age:
+          type: integer
+          minimum: 3
+          maximum: 100
+        avatar:
+          type: string
+          format: uri
+        traceId:
+          type: string
+          format: uuid
+          description: UUID for tracking user journey and debugging
+
+    Household:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        address:
+          type: string
+          maxLength: 300
+        settings:
+          type: object
+          properties:
+            point_to_dollar_rate:
+              type: number
+              format: decimal
+              default: 0.01
+              description: How many dollars per point
+            auto_approve_rewards:
+              type: boolean
+              default: false
+              description: Whether rewards are auto-approved or require parent approval
+            chore_approval_required:
+              type: boolean
+              default: true
+              description: Whether completed chores require parent approval
+            teen_privileges:
+              type: object
+              properties:
+                can_create_events:
+                  type: boolean
+                  default: true
+                can_redeem_rewards:
+                  type: boolean
+                  default: true
+                max_reward_value:
+                  type: number
+                  format: decimal
+                  nullable: true
+            child_privileges:
+              type: object
+              properties:
+                can_create_events:
+                  type: boolean
+                  default: true
+                can_redeem_rewards:
+                  type: boolean
+                  default: false
+                max_reward_value:
+                  type: number
+                  format: decimal
+                  default: 10.0
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+          readOnly: true
+        heads:
+          type: array
+          items:
+            type: integer
+          description: User IDs of household heads
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    HouseholdCreate:
+      type: object
+      required: [name, traceId]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        address:
+          type: string
+          maxLength: 300
+        settings:
+          type: object
+          properties:
+            point_to_dollar_rate:
+              type: number
+              format: decimal
+              default: 0.01
+            auto_approve_rewards:
+              type: boolean
+              default: false
+            chore_approval_required:
+              type: boolean
+              default: true
+        traceId:
+          type: string
+          format: uuid
+          description: UUID for tracking user journey and debugging
+
+    HouseholdUpdate:
+      type: object
+      required: [traceId]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        address:
+          type: string
+          maxLength: 300
+        settings:
+          type: object
+          properties:
+            point_to_dollar_rate:
+              type: number
+              format: decimal
+            auto_approve_rewards:
+              type: boolean
+            chore_approval_required:
+              type: boolean
+            teen_privileges:
+              type: object
+            child_privileges:
+              type: object
+        traceId:
+          type: string
+          format: uuid
+          description: UUID for tracking user journey and debugging
+
+    Chore:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        point_value:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        due_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [incomplete, pending, completed, skipped]
+          readOnly: true
+        assigned_to:
+          type: integer
+          nullable: true
+          description: User ID of assigned person
+        assigned_to_user:
+          $ref: '#/components/schemas/User'
+          readOnly: true
+        household:
+          type: integer
+        household_name:
+          type: string
+          readOnly: true
+        recurrence:
+          type: string
+          enum: [none, daily, weekly, monthly, annually]
+          default: none
+        creation_method:
+          type: string
+          enum: [manual, recurring, system]
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_by:
+          type: integer
+          readOnly: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        notes:
+          type: string
+          maxLength: 500
+          description: Completion or approval notes
+
+    ChoreCreate:
+      type: object
+      required: [name, point_value, due_date, household, traceId]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        point_value:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        due_date:
+          type: string
+          format: date
+        assigned_to:
+          type: integer
+          nullable: true
+        household:
+          type: integer
+        recurrence:
+          type: string
+          enum: [none, daily, weekly, monthly, annually]
+          default: none
+        traceId:
+          type: string
+          format: uuid
+          description: UUID for tracking user journey and debugging
+
+    ChoreUpdate:
+      type: object
+      required: [traceId]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        point_value:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        due_date:
+          type: string
+          format: date
+        assigned_to:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [incomplete, pending, completed, skipped]
+        recurrence:
+          type: string
+          enum: [none, daily, weekly, monthly, annually]
+        traceId:
+          type: string
+          format: uuid
+          description: UUID for tracking user journey and debugging
+
+    Reward:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        image:
+          type: string
+          format: uri
+          nullable: true
+        cost_points:
+          type: integer
+          minimum: 0
+          nullable: true
+        cost_dollars:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+        household:
+          type: integer
+        household_name:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          default: true
+        age_restrictions:
+          type: object
+          properties:
+            min_age:
+              type: integer
+              nullable: true
+            max_age:
+              type: integer
+              nullable: true
+            roles_allowed:
+              type: array
+              items:
+                type: string
+                enum: [parent, teen, child]
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_by:
+          type: integer
+          readOnly: true
+        user_can_afford:
+          type: boolean
+          readOnly: true
+          description: Whether current user can afford this reward
+
+    RewardCreate:
+      type: object
+      required: [title, household, traceId]
+      properties:
+        title:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        image:
+          type: string
+          format: uri
+        cost_points:
+          type: integer
+          minimum: 0
+        cost_dollars:
+          type: number
+          format: decimal
+          minimum: 0
+        household:
+          type: integer
+        is_active:
+          type: boolean
+          default: true
+        age_restrictions:
+          type: object
+          properties:
+            min_age:
+              type: integer
+            max_age:
+              type: integer
+            roles_allowed:
+              type: array
+              items:
+                type: string
+                enum: [parent, teen, child]
+        traceId:
+          type: string
+          format: uuid
+          description: UUID for tracking user journey and debugging
+
+    RewardUpdate:
+      type: object
+      required: [traceId]
+      properties:
+        title:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        image:
+          type: string
+          format: uri
+        cost_points:
+          type: integer
+          minimum: 0
+        cost_dollars:
+          type: number
+          format: decimal
+          minimum: 0
+        is_active:
+          type: boolean
+        age_restrictions:
+          type: object
+        traceId:
+          type: string
+          format: uuid
+          description: UUID for tracking user journey and debugging
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        event_date:
+          type: string
+          format: date-time
+        created_by:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        notification_settings:
+          type: object
+          properties:
+            notify_1_day:
+              type: boolean
+              default: true
+            notify_1_hour:
+              type: boolean
+              default: true
+            notify_15_min:
+              type: boolean
+              default: false
+            custom_notifications:
+              type: array
+              items:
+                type: object
+                properties:
+                  time_before:
+                    type: integer
+                    description: Minutes before event
+                  message:
+                    type: string
+        time_until_event:
+          type: object
+          readOnly: true
+          properties:
+            days:
+              type: integer
+            hours:
+              type: integer
+            minutes:
+              type: integer
+            seconds:
+              type: integer
+            total_seconds:
+              type: integer
+            progress_percentage:
+              type: number
+              format: decimal
+              description: Percentage from creation to event (0-100)
+
+    EventCreate:
+      type: object
+      required: [title, event_date, traceId]
+      properties:
+        title:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        event_date:
+          type: string
+          format: date-time
+        notification_settings:
+          type: object
+          properties:
+            notify_1_day:
+              type: boolean
+              default: true
+            notify_1_hour:
+              type: boolean
+              default: true
+            notify_15_min:
+              type: boolean
+              default: false
+            custom_notifications:
+              type: array
+              items:
+                type: object
+                properties:
+                  time_before:
+                    type: integer
+                  message:
+                    type: string
+        traceId:
+          type: string
+          format: uuid
+          description: UUID for tracking user journey and debugging
+
+    EventUpdate:
+      type: object
+      required: [traceId]
+      properties:
+        title:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        event_date:
+          type: string
+          format: date-time
+        notification_settings:
+          type: object
+        traceId:
+          type: string
+          format: uuid
+          description: UUID for tracking user journey and debugging
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+        user_name:
+          type: string
+          readOnly: true
+        household:
+          type: integer
+        household_name:
+          type: string
+          readOnly: true
+        transaction_type:
+          type: string
+          enum: [chore_completion, reward_redemption, manual_adjustment, bonus]
+        amount_points:
+          type: integer
+          description: Points gained (positive) or lost (negative)
+        amount_dollars:
+          type: number
+          format: decimal
+          description: Dollars gained (positive) or lost (negative)
+        description:
+          type: string
+          maxLength: 200
+        related_chore:
+          type: integer
+          nullable: true
+          description: Related chore ID if applicable
+        related_reward:
+          type: integer
+          nullable: true
+          description: Related reward ID if applicable
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+          default: approved
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_by:
+          type: integer
+          readOnly: true
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        approved_by:
+          type: integer
+          nullable: true
+          readOnly: true
+
+    TransactionCreate:
+      type: object
+      required: [user, transaction_type, description, traceId]
+      properties:
+        user:
+          type: integer
+        transaction_type:
+          type: string
+          enum: [manual_adjustment, bonus]
+        amount_points:
+          type: integer
+          default: 0
+        amount_dollars:
+          type: number
+          format: decimal
+          default: 0
+        description:
+          type: string
+          maxLength: 200
+        traceId:
+          type: string
+          format: uuid
+          description: UUID for tracking user journey and debugging
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ApiResponse'
+              - type: object
+                properties:
+                  errorMessage:
+                    type: string
+                    example: "Invalid request parameters"
+    
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ApiResponse'
+              - type: object
+                properties:
+                  errorMessage:
+                    type: string
+                    example: "Authentication required"
+    
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ApiResponse'
+              - type: object
+                properties:
+                  errorMessage:
+                    type: string
+                    example: "Insufficient permissions"
+    
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ApiResponse'
+              - type: object
+                properties:
+                  errorMessage:
+                    type: string
+                    example: "Resource not found"
+    
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/ApiResponse'
+              - type: object
+                properties:
+                  errorMessage:
+                    type: string
+                    example: "Validation failed"
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Users
+    description: User management operations
+  - name: Households
+    description: Household management operations
+  - name: Chores
+    description: Chore management and completion
+  - name: Rewards
+    description: Reward system and redemption
+  - name: Events
+    description: Countdown events and notifications
+  - name: Transactions
+    description: Point and money transaction tracking
+  - name: Analytics
+    description: Reporting and analytics endpoints
