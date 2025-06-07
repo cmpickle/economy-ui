@@ -197,6 +197,15 @@ const ErrorMessage = styled.div`
   margin-top: ${({ theme }) => theme.spacing.xs};
 `;
 
+const DebugInfo = styled.div`
+  background-color: ${({ theme }) => theme.colors.surfaceLight};
+  padding: ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+`;
+
 interface CreateChoreModalProps {
   onClose: () => void;
   onSuccess: () => void;
@@ -312,6 +321,13 @@ export const CreateChoreModal: React.FC<CreateChoreModalProps> = ({
         </ModalHeader>
 
         <ModalBody>
+          {/* Debug Information */}
+          <DebugInfo>
+            <strong>Debug Info:</strong><br />
+            Household Members Count: {householdMembers.length}<br />
+            Members: {householdMembers.map(m => `${m.first_name} ${m.last_name}`).join(', ') || 'None'}
+          </DebugInfo>
+
           <Form onSubmit={handleSubmit}>
             <FormGroup>
               <Label>
@@ -378,21 +394,35 @@ export const CreateChoreModal: React.FC<CreateChoreModalProps> = ({
                 >
                   Unassigned
                 </AssignmentOption>
-                {householdMembers.map(member => (
-                  <AssignmentOption
-                    key={member.id}
-                    type="button"
-                    selected={formData.assigned_to === member.id}
-                    onClick={() => handleInputChange('assigned_to', member.id)}
-                  >
-                    <Avatar
-                      avatar={member.profile.avatar}
-                      name={`${member.first_name} ${member.last_name}`}
-                      size="sm"
-                    />
-                    {member.first_name}
-                  </AssignmentOption>
-                ))}
+                {householdMembers.length > 0 ? (
+                  householdMembers.map(member => (
+                    <AssignmentOption
+                      key={member.id}
+                      type="button"
+                      selected={formData.assigned_to === member.id}
+                      onClick={() => handleInputChange('assigned_to', member.id)}
+                    >
+                      <Avatar
+                        avatar={member.profile.avatar}
+                        name={`${member.first_name} ${member.last_name}`}
+                        size="sm"
+                      />
+                      {member.first_name}
+                    </AssignmentOption>
+                  ))
+                ) : (
+                  <div style={{ 
+                    padding: '1rem', 
+                    color: '#6B7280', 
+                    fontStyle: 'italic',
+                    border: '1px dashed #E5E7EB',
+                    borderRadius: '0.375rem',
+                    width: '100%',
+                    textAlign: 'center'
+                  }}>
+                    No household members found
+                  </div>
+                )}
               </AssignmentOptions>
             </AssignmentSection>
 
