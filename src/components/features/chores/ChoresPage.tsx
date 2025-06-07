@@ -143,9 +143,14 @@ export const ChoresPage: React.FC = () => {
   
   // Get household members - use the first household from user's households array
   const userHouseholdId = user?.households?.[0];
-  const { data: householdMembers = [] } = useUsers(
+  console.log('User household ID:', userHouseholdId);
+  console.log('User households array:', user?.households);
+  
+  const { data: householdMembers = [], isLoading: membersLoading, error: membersError } = useUsers(
     userHouseholdId ? { household_id: userHouseholdId } : undefined
   );
+  
+  console.log('Household members query result:', { householdMembers, membersLoading, membersError });
   
   const completeChore = useCompleteChore();
   const approveChore = useApproveChore();
