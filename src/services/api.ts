@@ -8,7 +8,7 @@ class ApiService {
 
   constructor() {
     this.api = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL,
+      baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -45,16 +45,19 @@ class ApiService {
           if (refreshToken) {
             try {
               const response = await this.refreshToken(refreshToken);
-              this.setToken(response.data.access_token);
-              // Retry the original request
-              return this.api.request(error.config);
+              if (response.data?.access_token) {
+                this.setToken(response.data.access_token);
+                localStorage.setItem('access_token', response.data.access_token);
+                // Retry the original request
+                return this.api.request(error.config);
+              }
             } catch (refreshError) {
+              console.error('Token refresh failed:', refreshError);
               this.logout();
-              window.location.href = '/login';
+              // Don't redirect here, let the auth context handle it
             }
           } else {
             this.logout();
-            window.location.href = '/login';
           }
         }
         return Promise.reject(error);
@@ -64,13 +67,10 @@ class ApiService {
 
   setToken(token: string) {
     this.token = token;
-    localStorage.setItem('access_token', token);
   }
 
   logout() {
     this.token = null;
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
   }
 
   // Authentication
