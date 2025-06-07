@@ -18,7 +18,7 @@ const ChoresContainer = styled.div`
 
 const Header = styled.div`
   display: flex;
-  justify-content: between;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: ${({ theme }) => theme.spacing.xl};
   flex-wrap: wrap;
@@ -140,9 +140,13 @@ export const ChoresPage: React.FC = () => {
   });
 
   const { data: allChores = [], refetch: refetchChores } = useChores();
-  const { data: householdMembers = [] } = useUsers({ 
-    household_id: user?.households[0] 
-  });
+  
+  // Get household members - use the first household from user's households array
+  const userHouseholdId = user?.households?.[0];
+  const { data: householdMembers = [] } = useUsers(
+    userHouseholdId ? { household_id: userHouseholdId } : undefined
+  );
+  
   const completeChore = useCompleteChore();
   const approveChore = useApproveChore();
 
