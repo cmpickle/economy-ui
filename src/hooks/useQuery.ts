@@ -1,6 +1,23 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiService } from '../services/api';
-import { Chore, Reward, Event, LeaderboardEntry, UserSummary } from '../types/api';
+import { Chore, Reward, Event, LeaderboardEntry, UserSummary, User } from '../types/api';
+
+// Users
+export const useUsers = (params?: any) => {
+  return useQuery({
+    queryKey: ['users', params],
+    queryFn: () => apiService.getUsers(params),
+    select: (data) => data.data as User[],
+  });
+};
+
+export const useUser = (userId: number) => {
+  return useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => apiService.getUser(userId),
+    select: (data) => data.data as User,
+  });
+};
 
 // Chores
 export const useChores = (params?: any) => {
@@ -16,6 +33,29 @@ export const useChore = (choreId: number) => {
     queryKey: ['chore', choreId],
     queryFn: () => apiService.getChore(choreId),
     select: (data) => data.data as Chore,
+  });
+};
+
+export const useCreateChore = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: any) => apiService.createChore(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chores'] });
+    },
+  });
+};
+
+export const useUpdateChore = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ choreId, data }: { choreId: number; data: any }) =>
+      apiService.updateChore(choreId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chores'] });
+    },
   });
 };
 
