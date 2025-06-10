@@ -7,6 +7,7 @@ import { Header } from './components/layout/Header';
 import { Sidebar } from './components/layout/Sidebar';
 import { Dashboard } from './components/features/dashboard/Dashboard';
 import { ChoresPage } from './components/features/chores/ChoresPage';
+import { EventsPage } from './components/features/events/EventsPage';
 import { LoginForm } from './components/features/auth/LoginForm';
 import styled, { createGlobalStyle } from 'styled-components';
 
@@ -87,7 +88,7 @@ const AppContent: React.FC = () => {
       case 'rewards':
         return <div style={{ padding: '2rem' }}>Rewards section coming soon...</div>;
       case 'events':
-        return <div style={{ padding: '2rem' }}>Events section coming soon...</div>;
+        return <EventsPage />;
       case 'leaderboard':
         return <div style={{ padding: '2rem' }}>Leaderboard section coming soon...</div>;
       case 'profile':
