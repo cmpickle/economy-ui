@@ -5,14 +5,15 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useEvents, useCreateEvent } from '../../../hooks/useQuery';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { CountdownTimer } from '../../ui/CountdownTimer';
 import { EventForm } from './EventForm';
 import { EventCard } from './EventCard';
-import { Calendar, Plus, Filter, Search } from 'lucide-react';
+import { ChildEventForm } from './ChildEventForm';
+import { ChildEventCalendar } from './ChildEventCalendar';
+import { Calendar, Plus, Clock, Baby } from 'lucide-react';
 
 const EventsContainer = styled.div`
   padding: ${({ theme }) => theme.spacing.xl};
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 `;
 
@@ -34,6 +35,42 @@ const Title = styled.h1`
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 
+const ViewToggle = styled.div`
+  display: flex;
+  background-color: ${({ theme }) => theme.colors.surfaceLight};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  padding: 4px;
+  gap: 4px;
+`;
+
+const ViewButton = styled(motion.button)<{ active: boolean }>`
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  transition: all 0.2s ease;
+  
+  ${({ active, theme }) =>
+    active
+      ? `
+        background-color: ${theme.colors.primary};
+        color: ${theme.colors.white};
+        box-shadow: ${theme.shadows.sm};
+      `
+      : `
+        background-color: transparent;
+        color: ${theme.colors.textSecondary};
+        &:hover {
+          color: ${theme.colors.text};
+        }
+      `}
+`;
+
 const Controls = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing.md};
@@ -41,46 +78,38 @@ const Controls = styled.div`
   flex-wrap: wrap;
 `;
 
-const SearchContainer = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
+const CreateEventButton = styled(Button)<{ variant: 'child' | 'parent' }>`
+  ${({ variant, theme }) =>
+    variant === 'child'
+      ? `
+        background: linear-gradient(135deg, #FF6B6B, #4ECDC4);
+        font-size: ${theme.typography.fontSize.lg};
+        padding: ${theme.spacing.md} ${theme.spacing.xl};
+        border-radius: ${theme.borderRadius.xl};
+        box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 35px rgba(255, 107, 107, 0.4);
+        }
+      `
+      : ''}
 `;
 
-const SearchInput = styled.input`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  padding-left: 40px;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  width: 250px;
-  transition: border-color 0.2s ease;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
+const ChildView = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: ${({ theme }) => theme.spacing.xl};
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
   }
 `;
 
-const SearchIcon = styled(Search)`
-  position: absolute;
-  left: 12px;
-  width: 16px;
-  height: 16px;
-  color: ${({ theme }) => theme.colors.textSecondary};
-`;
-
-const FilterButton = styled(Button)`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-`;
-
-const EventsGrid = styled.div`
+const ParentView = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: ${({ theme }) => theme.spacing.lg};
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
 `;
 
 const EmptyState = styled(motion.div)`
@@ -89,132 +118,59 @@ const EmptyState = styled(motion.div)`
   color: ${({ theme }) => theme.colors.textSecondary};
 `;
 
-const EmptyIcon = styled.div`
-  font-size: 4rem;
+const EmptyIcon = styled.div<{ childView?: boolean }>`
+  font-size: ${({ childView }) => childView ? '6rem' : '4rem'};
   margin-bottom: ${({ theme }) => theme.spacing.lg};
 `;
 
-const EmptyTitle = styled.h3`
-  font-size: ${({ theme }) => theme.typography.fontSize.xl};
+const EmptyTitle = styled.h3<{ childView?: boolean }>`
+  font-size: ${({ theme, childView }) => 
+    childView ? theme.typography.fontSize['2xl'] : theme.typography.fontSize.xl};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text};
   margin-bottom: ${({ theme }) => theme.spacing.sm};
 `;
 
-const EmptyDescription = styled.p`
-  font-size: ${({ theme }) => theme.typography.fontSize.base};
+const EmptyDescription = styled.p<{ childView?: boolean }>`
+  font-size: ${({ theme, childView }) => 
+    childView ? theme.typography.fontSize.lg : theme.typography.fontSize.base};
   margin-bottom: ${({ theme }) => theme.spacing.lg};
-`;
-
-const FilterTabs = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.xs};
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-`;
-
-const FilterTab = styled.button<{ active: boolean }>`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: none;
-  background: none;
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s ease;
-  color: ${({ active, theme }) => 
-    active ? theme.colors.primary : theme.colors.textSecondary};
-  border-bottom-color: ${({ active, theme }) => 
-    active ? theme.colors.primary : 'transparent'};
-
-  &:hover {
-    color: ${({ theme }) => theme.colors.primary};
-  }
 `;
 
 export const EventsPage: React.FC = () => {
   const { user } = useAuth();
+  const [viewMode, setViewMode] = useState<'child' | 'parent'>('child');
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
   
   const { data: events = [], isLoading } = useEvents();
   const createEventMutation = useCreateEvent();
 
   if (!user) return null;
 
-  const canCreateEvents = user.profile.role === 'parent' || 
-    (user.profile.role === 'teen' && user.profile.role === 'teen'); // Assuming teens can create events
+  const isParent = user.profile.role === 'parent';
+  const isChild = user.profile.role === 'child';
 
-  const filterEvents = (events: any[]) => {
-    let filtered = events;
-
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(event =>
-        event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.description?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+  // Filter events based on view mode
+  const filteredEvents = events.filter(event => {
+    if (viewMode === 'child') {
+      return event.event_type === 'same_day' || !event.event_type; // Show same-day events or legacy events
+    } else {
+      return event.event_type === 'scheduled' || !event.event_type; // Show scheduled events or legacy events
     }
-
-    // Filter by status
-    const now = new Date();
-    switch (activeFilter) {
-      case 'upcoming':
-        filtered = filtered.filter(event => new Date(event.event_date) > now);
-        break;
-      case 'past':
-        filtered = filtered.filter(event => new Date(event.event_date) <= now);
-        break;
-      case 'today':
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        filtered = filtered.filter(event => {
-          const eventDate = new Date(event.event_date);
-          return eventDate >= today && eventDate < tomorrow;
-        });
-        break;
-      default:
-        break;
-    }
-
-    return filtered.sort((a, b) => 
-      new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
-    );
-  };
-
-  const filteredEvents = filterEvents(events);
+  });
 
   const handleCreateEvent = async (eventData: any) => {
     try {
-      await createEventMutation.mutateAsync(eventData);
+      const eventWithType = {
+        ...eventData,
+        event_type: viewMode === 'child' ? 'same_day' : 'scheduled'
+      };
+      await createEventMutation.mutateAsync(eventWithType);
       setShowCreateForm(false);
     } catch (error) {
       console.error('Failed to create event:', error);
     }
   };
-
-  const getFilterCounts = () => {
-    const now = new Date();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    return {
-      all: events.length,
-      upcoming: events.filter(event => new Date(event.event_date) > now).length,
-      today: events.filter(event => {
-        const eventDate = new Date(event.event_date);
-        return eventDate >= today && eventDate < tomorrow;
-      }).length,
-      past: events.filter(event => new Date(event.event_date) <= now).length,
-    };
-  };
-
-  const filterCounts = getFilterCounts();
 
   if (isLoading) {
     return (
@@ -236,107 +192,147 @@ export const EventsPage: React.FC = () => {
     <EventsContainer>
       <Header>
         <Title>
-          <Calendar size={32} />
-          Family Events
+          {viewMode === 'child' ? '🎈' : '📅'} Family Events
         </Title>
         
         <Controls>
-          <SearchContainer>
-            <SearchIcon />
-            <SearchInput
-              type="text"
-              placeholder="Search events..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </SearchContainer>
+          <ViewToggle>
+            <ViewButton
+              active={viewMode === 'child'}
+              onClick={() => setViewMode('child')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Baby size={16} />
+              Kid View
+            </ViewButton>
+            <ViewButton
+              active={viewMode === 'parent'}
+              onClick={() => setViewMode('parent')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Calendar size={16} />
+              Parent View
+            </ViewButton>
+          </ViewToggle>
           
-          {canCreateEvents && (
-            <Button onClick={() => setShowCreateForm(true)}>
-              <Plus size={16} />
-              Create Event
-            </Button>
+          {(isParent || (viewMode === 'child' && !isParent)) && (
+            <CreateEventButton
+              variant={viewMode}
+              onClick={() => setShowCreateForm(true)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Plus size={viewMode === 'child' ? 20 : 16} />
+              {viewMode === 'child' ? 'Add Today Event!' : 'Create Event'}
+            </CreateEventButton>
           )}
         </Controls>
       </Header>
 
-      <FilterTabs>
-        <FilterTab 
-          active={activeFilter === 'all'} 
-          onClick={() => setActiveFilter('all')}
-        >
-          All ({filterCounts.all})
-        </FilterTab>
-        <FilterTab 
-          active={activeFilter === 'upcoming'} 
-          onClick={() => setActiveFilter('upcoming')}
-        >
-          Upcoming ({filterCounts.upcoming})
-        </FilterTab>
-        <FilterTab 
-          active={activeFilter === 'today'} 
-          onClick={() => setActiveFilter('today')}
-        >
-          Today ({filterCounts.today})
-        </FilterTab>
-        <FilterTab 
-          active={activeFilter === 'past'} 
-          onClick={() => setActiveFilter('past')}
-        >
-          Past ({filterCounts.past})
-        </FilterTab>
-      </FilterTabs>
-
-      <AnimatePresence>
-        {filteredEvents.length > 0 ? (
-          <EventsGrid>
-            {filteredEvents.map((event, index) => (
-              <motion.div
-                key={event.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <EventCard event={event} />
-              </motion.div>
-            ))}
-          </EventsGrid>
-        ) : (
-          <EmptyState
+      <AnimatePresence mode="wait">
+        {viewMode === 'child' ? (
+          <motion.div
+            key="child-view"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
           >
-            <EmptyIcon>📅</EmptyIcon>
-            <EmptyTitle>
-              {searchTerm ? 'No events found' : 'No events yet'}
-            </EmptyTitle>
-            <EmptyDescription>
-              {searchTerm 
-                ? `No events match "${searchTerm}". Try a different search term.`
-                : canCreateEvents 
-                  ? 'Create your first family event to get started!'
-                  : 'No events have been created yet. Ask a parent to create some events!'
-              }
-            </EmptyDescription>
-            {canCreateEvents && !searchTerm && (
-              <Button onClick={() => setShowCreateForm(true)}>
-                <Plus size={16} />
-                Create Your First Event
-              </Button>
+            {filteredEvents.length > 0 ? (
+              <ChildView>
+                <ChildEventCalendar events={filteredEvents} />
+                <div>
+                  {/* Today's events sidebar could go here */}
+                </div>
+              </ChildView>
+            ) : (
+              <EmptyState
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <EmptyIcon childView>🎪</EmptyIcon>
+                <EmptyTitle childView>No Fun Events Yet!</EmptyTitle>
+                <EmptyDescription childView>
+                  Ask a grown-up to add some exciting events, or create a same-day event yourself!
+                </EmptyDescription>
+                {!isParent && (
+                  <CreateEventButton
+                    variant="child"
+                    onClick={() => setShowCreateForm(true)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Plus size={20} />
+                    Add Today Event!
+                  </CreateEventButton>
+                )}
+              </EmptyState>
             )}
-          </EmptyState>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="parent-view"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {filteredEvents.length > 0 ? (
+              <ParentView>
+                {filteredEvents.map((event, index) => (
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                  >
+                    <EventCard event={event} />
+                  </motion.div>
+                ))}
+              </ParentView>
+            ) : (
+              <EmptyState
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <EmptyIcon>📅</EmptyIcon>
+                <EmptyTitle>No Events Scheduled</EmptyTitle>
+                <EmptyDescription>
+                  Create your first family event to get started!
+                </EmptyDescription>
+                {isParent && (
+                  <Button onClick={() => setShowCreateForm(true)}>
+                    <Plus size={16} />
+                    Create Your First Event
+                  </Button>
+                )}
+              </EmptyState>
+            )}
+          </motion.div>
         )}
       </AnimatePresence>
 
       <AnimatePresence>
         {showCreateForm && (
-          <EventForm
-            onSubmit={handleCreateEvent}
-            onCancel={() => setShowCreateForm(false)}
-            isLoading={createEventMutation.isPending}
-          />
+          <>
+            {viewMode === 'child' ? (
+              <ChildEventForm
+                onSubmit={handleCreateEvent}
+                onCancel={() => setShowCreateForm(false)}
+                isLoading={createEventMutation.isPending}
+              />
+            ) : (
+              <EventForm
+                onSubmit={handleCreateEvent}
+                onCancel={() => setShowCreateForm(false)}
+                isLoading={createEventMutation.isPending}
+              />
+            )}
+          </>
         )}
       </AnimatePresence>
     </EventsContainer>

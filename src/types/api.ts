@@ -93,6 +93,7 @@ export interface Event {
   title: string;
   description?: string;
   event_date: string;
+  event_type?: 'same_day' | 'scheduled'; // New field for event types
   created_by: number;
   created_at: string;
   notification_settings: {
