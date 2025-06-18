@@ -121,7 +121,7 @@ export interface Transaction {
   user_name: string;
   household: number;
   household_name: string;
-  transaction_type: 'chore_completion' | 'reward_redemption' | 'manual_adjustment' | 'bonus';
+  transaction_type: 'chore_completion' | 'reward_redemption' | 'manual_adjustment' | 'bonus' | 'penalty' | 'allowance' | 'gift';
   amount_points: number;
   amount_dollars: number;
   description: string;
@@ -130,8 +130,10 @@ export interface Transaction {
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;
   created_by: number;
+  created_by_name: string;
   approved_at?: string;
   approved_by?: number;
+  notes?: string;
 }
 
 export interface LeaderboardEntry {
