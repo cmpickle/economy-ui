@@ -67,6 +67,7 @@ interface NavItemData {
 const navigationItems: NavItemData[] = [
   { id: 'dashboard', label: 'Dashboard', icon: '🏠', roles: ['parent', 'teen', 'child'] },
   { id: 'chores', label: 'Chores', icon: '✅', roles: ['parent', 'teen', 'child'] },
+  { id: 'learning', label: 'Learning', icon: '📚', roles: ['parent', 'teen', 'child'] },
   { id: 'rewards', label: 'Rewards', icon: '🎁', roles: ['parent', 'teen', 'child'] },
   { id: 'events', label: 'Events', icon: '📅', roles: ['parent', 'teen', 'child'] },
   { id: 'leaderboard', label: 'Leaderboard', icon: '🏆', roles: ['parent', 'teen', 'child'] },

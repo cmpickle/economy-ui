@@ -156,3 +156,65 @@ export interface UserSummary {
   completion_rate: number;
   rewards_redeemed: number;
 }
+
+// Learning-related types
+export interface LearningTask {
+  id: number;
+  title: string;
+  description?: string;
+  task_type: 'sudoku_3x3' | 'math' | 'reading' | 'writing' | 'science';
+  difficulty_level: 'easy' | 'medium' | 'hard';
+  point_value: number;
+  assigned_to: number;
+  assigned_by: number;
+  household: number;
+  due_date?: string;
+  status: 'assigned' | 'in_progress' | 'completed' | 'reviewed';
+  task_data: any; // Specific data for each task type
+  created_at: string;
+  started_at?: string;
+  completed_at?: string;
+  reviewed_at?: string;
+  time_spent_seconds?: number;
+  attempts: number;
+  max_attempts?: number;
+}
+
+export interface LearningProgress {
+  id: number;
+  user_id: number;
+  task_id: number;
+  progress_data: any; // Current state of the task
+  started_at: string;
+  last_updated: string;
+  is_completed: boolean;
+  completion_time_seconds?: number;
+  score?: number;
+  mistakes_count: number;
+}
+
+export interface LearningStats {
+  user_id: number;
+  period: string;
+  tasks_assigned: number;
+  tasks_completed: number;
+  completion_rate: number;
+  average_score: number;
+  total_time_spent_minutes: number;
+  points_earned: number;
+  favorite_subject: string;
+  improvement_areas: string[];
+  daily_activity: {
+    date: string;
+    tasks_completed: number;
+    time_spent_minutes: number;
+    points_earned: number;
+  }[];
+}
+
+export interface SudokuPuzzle {
+  grid: (number | null)[][];
+  solution: number[][];
+  prefilled_positions: { row: number; col: number }[];
+  difficulty: 'easy' | 'medium' | 'hard';
+}
