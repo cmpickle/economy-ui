@@ -212,8 +212,8 @@ export const FinancesPage: React.FC = () => {
 
   // Calculate summary statistics
   const calculateSummary = () => {
-    const totalFamilyMoney = familyMembers.reduce((sum, member) => sum + member.profile.total_money, 0);
-    const totalFamilyPoints = familyMembers.reduce((sum, member) => sum + member.profile.total_points, 0);
+    const totalFamilyMoney = familyMembers.reduce((sum, member) => sum + (member.profile.total_money || 0), 0);
+    const totalFamilyPoints = familyMembers.reduce((sum, member) => sum + (member.profile.total_points || 0), 0);
     
     const thisMonthTransactions = transactions.filter(transaction => {
       const transactionDate = new Date(transaction.created_at);
@@ -223,12 +223,12 @@ export const FinancesPage: React.FC = () => {
     });
 
     const monthlyIncome = thisMonthTransactions
-      .filter(t => t.amount_dollars > 0)
-      .reduce((sum, t) => sum + t.amount_dollars, 0);
+      .filter(t => parseFloat(String(t.amount_dollars || 0)) > 0)
+      .reduce((sum, t) => sum + parseFloat(String(t.amount_dollars || 0)), 0);
 
     const monthlyExpenses = thisMonthTransactions
-      .filter(t => t.amount_dollars < 0)
-      .reduce((sum, t) => sum + Math.abs(t.amount_dollars), 0);
+      .filter(t => parseFloat(String(t.amount_dollars || 0)) < 0)
+      .reduce((sum, t) => sum + Math.abs(parseFloat(String(t.amount_dollars || 0))), 0);
 
     return {
       totalFamilyMoney,
