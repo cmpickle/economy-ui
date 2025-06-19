@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
+import { useAuth } from '../../../hooks/useAuth';
 import { useCreateReward } from '../../../hooks/useQuery';
 import { X, Gift, Star, DollarSign, Image, Calendar, Users } from 'lucide-react';
 
@@ -225,6 +226,7 @@ export const CreateRewardModal: React.FC<CreateRewardModalProps> = ({
   onClose,
   onSuccess
 }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -275,10 +277,16 @@ export const CreateRewardModal: React.FC<CreateRewardModalProps> = ({
       return;
     }
 
+    if (!user?.households?.[0]) {
+      setErrors({ submit: 'No household found for user' });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const rewardData = {
         ...formData,
+        household: user.households[0], // Include the user's household ID
         age_restrictions: {
           min_age: formData.age_restrictions.min_age ? parseInt(formData.age_restrictions.min_age) : undefined,
           max_age: formData.age_restrictions.max_age ? parseInt(formData.age_restrictions.max_age) : undefined,
