@@ -10,6 +10,7 @@ import { ChoresPage } from './components/features/chores/ChoresPage';
 import { LearningPage } from './components/features/learning/LearningPage';
 import { TransactionsPage } from './components/features/transactions/TransactionsPage';
 import { FinancesPage } from './components/features/finances/FinancesPage';
+import { RewardsPage } from './components/features/rewards/RewardsPage';
 import { EventsPage } from './components/features/events/EventsPage';
 import { LoginForm } from './components/features/auth/LoginForm';
 import styled, { createGlobalStyle } from 'styled-components';
@@ -95,7 +96,7 @@ const AppContent: React.FC = () => {
       case 'finances':
         return <FinancesPage />;
       case 'rewards':
-        return <div style={{ padding: '2rem' }}>Rewards section coming soon...</div>;
+        return <RewardsPage />;
       case 'events':
         return <EventsPage />;
       case 'leaderboard':
