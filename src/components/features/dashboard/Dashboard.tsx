@@ -1,17 +1,64 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../../hooks/useAuth';
 import { useChores, useRewards, useEvents, useUserSummary } from '../../../hooks/useQuery';
 import { Card } from '../../ui/Card';
 import { ProgressBar } from '../../ui/ProgressBar';
 import { CountdownTimer } from '../../ui/CountdownTimer';
+import { FamilyDashboard } from './FamilyDashboard';
 import { formatCurrency, formatPoints } from '../../../utils/api';
+import { Users, User, Target, Activity } from 'lucide-react';
 
 const DashboardContainer = styled.div`
   padding: ${({ theme }) => theme.spacing.xl};
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
+`;
+
+const DashboardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.md};
+`;
+
+const ViewToggle = styled.div`
+  display: flex;
+  background-color: ${({ theme }) => theme.colors.surfaceLight};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  padding: 4px;
+  gap: 4px;
+`;
+
+const ViewButton = styled(motion.button)<{ active: boolean }>`
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  transition: all 0.2s ease;
+  
+  ${({ active, theme }) =>
+    active
+      ? `
+        background-color: ${theme.colors.primary};
+        color: ${theme.colors.white};
+        box-shadow: ${theme.shadows.sm};
+      `
+      : `
+        background-color: transparent;
+        color: ${theme.colors.textSecondary};
+        &:hover {
+          color: ${theme.colors.text};
+        }
+      `}
 `;
 
 const WelcomeSection = styled(motion.div)`
@@ -127,14 +174,22 @@ const EventTitle = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.sm};
 `;
 
+type DashboardView = 'personal' | 'family';
+type FamilyViewMode = 'overview' | 'detailed';
+
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const [dashboardView, setDashboardView] = useState<DashboardView>('personal');
+  const [familyViewMode, setFamilyViewMode] = useState<FamilyViewMode>('overview');
+  
   const { data: chores = [] } = useChores({ assigned_to: user?.id, status: 'incomplete' });
   const { data: rewards = [] } = useRewards({ available_only: false });
   const { data: events = [] } = useEvents({ upcoming_only: true });
   const { data: userSummary } = useUserSummary();
 
   if (!user) return null;
+
+  const isParent = user.profile.role === 'parent';
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -147,8 +202,8 @@ export const Dashboard: React.FC = () => {
   const upcomingChores = chores.slice(0, 5);
   const upcomingEvents = events.slice(0, 3);
 
-  return (
-    <DashboardContainer>
+  const renderPersonalDashboard = () => (
+    <>
       <WelcomeSection
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -294,6 +349,66 @@ export const Dashboard: React.FC = () => {
           </motion.div>
         )}
       </SectionsGrid>
+    </>
+  );
+
+  return (
+    <DashboardContainer>
+      {isParent && (
+        <DashboardHeader>
+          <WelcomeTitle style={{ margin: 0 }}>
+            Dashboard
+          </WelcomeTitle>
+          
+          <ViewToggle>
+            <ViewButton
+              active={dashboardView === 'personal'}
+              onClick={() => setDashboardView('personal')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <User size={16} />
+              Personal
+            </ViewButton>
+            <ViewButton
+              active={dashboardView === 'family'}
+              onClick={() => setDashboardView('family')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Users size={16} />
+              Family
+            </ViewButton>
+          </ViewToggle>
+        </DashboardHeader>
+      )}
+
+      <AnimatePresence mode="wait">
+        {dashboardView === 'family' && isParent ? (
+          <motion.div
+            key="family-dashboard"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <FamilyDashboard 
+              viewMode={familyViewMode}
+              onViewModeChange={setFamilyViewMode}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="personal-dashboard"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {renderPersonalDashboard()}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </DashboardContainer>
   );
 };
