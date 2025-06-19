@@ -72,6 +72,7 @@ const navigationItems: NavItemData[] = [
   { id: 'events', label: 'Events', icon: '📅', roles: ['parent', 'teen', 'child'] },
   { id: 'leaderboard', label: 'Leaderboard', icon: '🏆', roles: ['parent', 'teen', 'child'] },
   { id: 'transactions', label: 'Transactions', icon: '💳', roles: ['parent'] },
+  { id: 'finances', label: 'Finances', icon: '💰', roles: ['parent'] },
   { id: 'profile', label: 'Profile', icon: '👤', roles: ['parent', 'teen', 'child'] },
   { id: 'manage', label: 'Manage Family', icon: '👨‍👩‍👧‍👦', roles: ['parent'] },
 ];
@@ -92,11 +93,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
   );
 
   const mainItems = availableItems.filter(item => 
-    !['profile', 'manage', 'transactions'].includes(item.id)
+    !['profile', 'manage', 'transactions', 'finances'].includes(item.id)
   );
   
   const managementItems = availableItems.filter(item => 
-    ['transactions', 'manage'].includes(item.id)
+    ['transactions', 'finances', 'manage'].includes(item.id)
   );
 
   const settingsItems = availableItems.filter(item => 
