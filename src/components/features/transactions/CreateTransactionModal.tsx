@@ -351,7 +351,9 @@ export const CreateTransactionModal: React.FC<CreateTransactionModalProps> = ({
     try {
       // Adjust amounts for penalty transactions
       const adjustedData = {
-        ...formData,
+        ...(({ user_id, ...rest}) => rest)(formData),
+        user: formData.user_id,
+        household: householdMembers.find(member => member.id === formData.user_id)?.households[0],
         amount_points: formData.transaction_type === 'penalty' 
           ? -Math.abs(formData.amount_points) 
           : Math.abs(formData.amount_points),
@@ -471,7 +473,7 @@ export const CreateTransactionModal: React.FC<CreateTransactionModalProps> = ({
                       <UserInfo>
                         <UserName>{member.first_name} {member.last_name}</UserName>
                         <UserBalance>
-                          {member.profile.total_points} pts • ${member.profile.total_money.toFixed(2)}
+                          {member.profile.total_points} pts • ${Number(member.profile.total_money).toFixed(2)}
                         </UserBalance>
                       </UserInfo>
                     </UserCard>

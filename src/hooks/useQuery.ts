@@ -139,92 +139,7 @@ export const useCreateEvent = () => {
 export const useTransactions = (params?: any) => {
   return useQuery({
     queryKey: ['transactions', params],
-    queryFn: () => {
-      // Mock API call - replace with actual implementation
-      return Promise.resolve({
-        data: [
-          {
-            id: 1,
-            user: 3,
-            user_name: 'Emma Johnson',
-            household: 1,
-            household_name: 'Johnson Family',
-            transaction_type: 'bonus',
-            amount_points: 50,
-            amount_dollars: 0,
-            description: 'Bonus for helping with dishes without being asked',
-            status: 'approved',
-            created_at: '2024-01-15T10:30:00Z',
-            created_by: 1,
-            created_by_name: 'John Johnson',
-            notes: 'Great initiative!'
-          },
-          {
-            id: 2,
-            user: 4,
-            user_name: 'Alex Johnson',
-            household: 1,
-            household_name: 'Johnson Family',
-            transaction_type: 'allowance',
-            amount_points: 0,
-            amount_dollars: 10.00,
-            description: 'Weekly allowance',
-            status: 'approved',
-            created_at: '2024-01-14T09:00:00Z',
-            created_by: 1,
-            created_by_name: 'John Johnson'
-          },
-          {
-            id: 3,
-            user: 3,
-            user_name: 'Emma Johnson',
-            household: 1,
-            household_name: 'Johnson Family',
-            transaction_type: 'penalty',
-            amount_points: -25,
-            amount_dollars: 0,
-            description: 'Penalty for not cleaning room after reminder',
-            status: 'approved',
-            created_at: '2024-01-13T16:45:00Z',
-            created_by: 1,
-            created_by_name: 'John Johnson',
-            notes: 'Room must be cleaned by tomorrow'
-          },
-          {
-            id: 4,
-            user: 4,
-            user_name: 'Alex Johnson',
-            household: 1,
-            household_name: 'Johnson Family',
-            transaction_type: 'chore_completion',
-            amount_points: 15,
-            amount_dollars: 0,
-            description: 'Completed: Take out trash',
-            related_chore: 1,
-            status: 'approved',
-            created_at: '2024-01-12T18:20:00Z',
-            created_by: 4,
-            created_by_name: 'Alex Johnson'
-          },
-          {
-            id: 5,
-            user: 3,
-            user_name: 'Emma Johnson',
-            household: 1,
-            household_name: 'Johnson Family',
-            transaction_type: 'gift',
-            amount_points: 0,
-            amount_dollars: 20.00,
-            description: 'Birthday gift money',
-            status: 'approved',
-            created_at: '2024-01-10T12:00:00Z',
-            created_by: 1,
-            created_by_name: 'John Johnson',
-            notes: 'Happy 13th birthday!'
-          }
-        ]
-      });
-    },
+    queryFn: () => apiService.getTransactions(params),
     select: (data) => data.data as Transaction[],
   });
 };
@@ -233,20 +148,7 @@ export const useCreateTransaction = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (data: any) => {
-      // Mock API call - replace with actual implementation
-      console.log('Creating transaction:', data);
-      axios.
-      return Promise.resolve({ 
-        data: { 
-          id: Date.now(), 
-          ...data,
-          status: 'approved',
-          created_at: new Date().toISOString(),
-          created_by_name: 'Current User'
-        } 
-      });
-    },
+    mutationFn: (data: any) => apiService.createTransaction(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });

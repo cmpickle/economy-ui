@@ -400,13 +400,13 @@ export const TransactionSummary: React.FC<TransactionSummaryProps> = ({
               </SummaryCardTitle>
               <SummaryStats>
                 <StatItem>
-                  <StatValue>${overallStats.totalDollarsDistributed.toFixed(2)}</StatValue>
+                  <StatValue>${Number(overallStats.totalDollarsDistributed).toFixed(2)}</StatValue>
                   <StatLabel>Total Money</StatLabel>
                 </StatItem>
                 <StatItem>
                   <StatValue>
                     ${overallStats.totalTransactions > 0 
-                      ? (overallStats.totalDollarsDistributed / overallStats.totalTransactions).toFixed(2)
+                      ? Number(overallStats.totalDollarsDistributed / overallStats.totalTransactions).toFixed(2)
                       : '0.00'
                     }
                   </StatValue>

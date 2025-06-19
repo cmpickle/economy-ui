@@ -5,6 +5,7 @@ import { Card } from '../../ui/Card';
 import { CountdownTimer } from '../../ui/CountdownTimer';
 import { Event } from '../../../types/api';
 import { formatDateTime } from '../../../utils/api';
+import dayjs from 'dayjs';
 
 interface ChildEventCalendarProps {
   events: Event[];
@@ -150,7 +151,7 @@ const getEventIcon = (title: string): string => {
 };
 
 export const ChildEventCalendar: React.FC<ChildEventCalendarProps> = ({ events }) => {
-  const today = new Date();
+  const today = dayjs().endOf('day').toDate(); // Get today's date at midnight
   const todayString = today.toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',

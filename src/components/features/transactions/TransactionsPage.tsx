@@ -449,7 +449,7 @@ export const TransactionsPage: React.FC = () => {
         >
           <StatCard>
             <StatIcon>💰</StatIcon>
-            <StatValue>${stats.totalDollarsDistributed.toFixed(2)}</StatValue>
+            <StatValue>${Number(stats?.totalDollarsDistributed ?? 0).toFixed(2)}</StatValue>
             <StatLabel>Money Distributed</StatLabel>
           </StatCard>
         </motion.div>
