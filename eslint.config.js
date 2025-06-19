@@ -23,6 +23,12 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+      'ignore-rest-sibilings': [
+        'error',
+        {
+          allowRestSiblings: true,
+        }
+      ],
     },
   }
 );

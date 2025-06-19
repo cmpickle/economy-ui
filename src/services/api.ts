@@ -236,6 +236,14 @@ class ApiService {
     const response = await this.api.get('/transactions', { params });
     return response.data;
   }
+
+  async createTransaction(data: any): Promise<ApiResponse> {
+    const response = await this.api.post('/transactions', {
+      ...data,
+      traceId: generateTraceId(),
+    });
+    return response.data;
+  }
 }
 
 export const apiService = new ApiService();

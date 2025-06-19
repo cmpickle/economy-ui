@@ -67,9 +67,11 @@ interface NavItemData {
 const navigationItems: NavItemData[] = [
   { id: 'dashboard', label: 'Dashboard', icon: '🏠', roles: ['parent', 'teen', 'child'] },
   { id: 'chores', label: 'Chores', icon: '✅', roles: ['parent', 'teen', 'child'] },
+  { id: 'learning', label: 'Learning', icon: '📚', roles: ['parent', 'teen', 'child'] },
   { id: 'rewards', label: 'Rewards', icon: '🎁', roles: ['parent', 'teen', 'child'] },
   { id: 'events', label: 'Events', icon: '📅', roles: ['parent', 'teen', 'child'] },
   { id: 'leaderboard', label: 'Leaderboard', icon: '🏆', roles: ['parent', 'teen', 'child'] },
+  { id: 'transactions', label: 'Transactions', icon: '💳', roles: ['parent'] },
   { id: 'profile', label: 'Profile', icon: '👤', roles: ['parent', 'teen', 'child'] },
   { id: 'manage', label: 'Manage Family', icon: '👨‍👩‍👧‍👦', roles: ['parent'] },
 ];
@@ -90,11 +92,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
   );
 
   const mainItems = availableItems.filter(item => 
-    !['profile', 'manage'].includes(item.id)
+    !['profile', 'manage', 'transactions'].includes(item.id)
   );
   
+  const managementItems = availableItems.filter(item => 
+    ['transactions', 'manage'].includes(item.id)
+  );
+
   const settingsItems = availableItems.filter(item => 
-    ['profile', 'manage'].includes(item.id)
+    ['profile'].includes(item.id)
   );
 
   return (
@@ -117,6 +123,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
         ))}
       </NavSection>
 
+      {managementItems.length > 0 && (
+        <NavSection>
+          <SectionTitle>Management</SectionTitle>
+          {managementItems.map((item, index) => (
+            <NavItem
+              key={item.id}
+              active={activeSection === item.id}
+              onClick={() => onSectionChange(item.id)}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: (mainItems.length + index) * 0.1 }}
+              whileHover={{ x: 4 }}
+            >
+              <NavIcon>{item.icon}</NavIcon>
+              {item.label}
+            </NavItem>
+          ))}
+        </NavSection>
+      )}
+
       {settingsItems.length > 0 && (
         <NavSection>
           <SectionTitle>Settings</SectionTitle>
@@ -127,7 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
               onClick={() => onSectionChange(item.id)}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: (mainItems.length + index) * 0.1 }}
+              transition={{ duration: 0.3, delay: (mainItems.length + managementItems.length + index) * 0.1 }}
               whileHover={{ x: 4 }}
             >
               <NavIcon>{item.icon}</NavIcon>
