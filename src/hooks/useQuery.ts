@@ -236,9 +236,8 @@ export const useCreateTransaction = () => {
     mutationFn: (data: any) => {
       // Mock API call - replace with actual implementation
       console.log('Creating transaction:', data);
-      axios.
       return Promise.resolve({ 
-        data: { 
+        data: {
           id: Date.now(), 
           ...data,
           status: 'approved',
